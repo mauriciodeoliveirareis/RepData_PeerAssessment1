@@ -57,14 +57,14 @@ totalDays <- length(levels(activityDf$date))
 ```
 The indivitual of this experiment has taken 570608 steps during the 61 days that he was wearing his personal activity monitoring device.
 
-I've calculated the steps per day ignoring the days that have NA valuesm generated a histogram and calculated its mean and median:
+I've calculated the sum of steps per day ignoring the days that have NA values, generated a histogram and calculated its mean and median:
 
 ```r
 stepsPerDay <- tapply(activityDfNoNa$steps, activityDfNoNa$date, FUN = sum)
 stepsPerDay <- stepsPerDay[!is.na(stepsPerDay)]
 stepsPerDayMean <- format(round(mean(stepsPerDay), 2), nsmall = 2)
 stepsPerDayMedian <- format(round(median(stepsPerDay), 2), nsmall = 2)
-hist(stepsPerDay)
+hist(stepsPerDay, ylab = "Sum of steps", xlab = "Days")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
@@ -73,11 +73,37 @@ hist(stepsPerDay)
 The mean of steps per day here is 10766.19 and the median is 10765.00
 
 ## What is the average daily activity pattern?
+The get a view about the time interval patterns, I've calculated the average of steps during each time interval.  
+You can see below the results of that with a time series plot:
 
+```r
+avgStepsPerInterval <- tapply(activityDfNoNa$steps, activityDfNoNa$interval, FUN = mean)
+plot(y=avgStepsPerInterval, x= rownames(avgStepsPerInterval),type = "l", ylab = "Average Steps per Interval", xlab="5 min interval")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+
+I've calculated the interval with the highest average of steps as well:
+
+```r
+maxAvgStepsPerInterval <- max(avgStepsPerInterval)
+maxAvgStepsIntervalName <- names(avgStepsPerInterval[avgStepsPerInterval == maxAvgStepsPerInterval])
+maxAvgStepsPerIntervalFormatted <- format(round(maxAvgStepsPerInterval, 2), nsmall = 2)
+```
+The interval with the biggest average of steps per day is 835 with an average of 206.17 steps
 
 
 ## Imputing missing values
+This data set came with some missing values for steps, bellow I've calculated how many rows have missing values on this data set:
 
+```r
+sapply(activityDf, function(x) sum(is.na(x)))
+```
+
+```
+##    steps     date interval 
+##     2304        0        0
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?

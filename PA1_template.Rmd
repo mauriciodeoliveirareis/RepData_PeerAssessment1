@@ -41,24 +41,58 @@ totalDays <- length(levels(activityDf$date))
 ```
 The indivitual of this experiment has taken `r totalSteps` steps during the `r totalDays` days that he was wearing his personal activity monitoring device.
 
-I've calculated the steps per day ignoring the days that have NA valuesm generated a histogram and calculated its mean and median:
+I've calculated the sum of steps per day ignoring the days that have NA values, generated a histogram and calculated its mean and median:
 ```{r}
 stepsPerDay <- tapply(activityDfNoNa$steps, activityDfNoNa$date, FUN = sum)
 stepsPerDay <- stepsPerDay[!is.na(stepsPerDay)]
 stepsPerDayMean <- format(round(mean(stepsPerDay), 2), nsmall = 2)
 stepsPerDayMedian <- format(round(median(stepsPerDay), 2), nsmall = 2)
-hist(stepsPerDay)
+hist(stepsPerDay, ylab = "Sum of steps", xlab = "Days")
 ```
 
 
 The mean of steps per day here is `r stepsPerDayMean` and the median is `r stepsPerDayMedian`
 
 ## What is the average daily activity pattern?
+The get a view about the time interval patterns, I've calculated the average of steps during each time interval.  
+You can see below the results of that with a time series plot:
+```{r}
+avgStepsPerInterval <- tapply(activityDfNoNa$steps, activityDfNoNa$interval, FUN = mean)
+plot(y=avgStepsPerInterval, x= rownames(avgStepsPerInterval),type = "l", ylab = "Average Steps per Interval", xlab="5 min interval")
+```
 
+I've calculated the interval with the highest average of steps as well:
+```{r}
+maxAvgStepsPerInterval <- max(avgStepsPerInterval)
+maxAvgStepsIntervalName <- names(avgStepsPerInterval[avgStepsPerInterval == maxAvgStepsPerInterval])
+maxAvgStepsPerIntervalFormatted <- format(round(maxAvgStepsPerInterval, 2), nsmall = 2)
+```
+The interval with the biggest average of steps per day is `r maxAvgStepsIntervalName` with an average of `r maxAvgStepsPerIntervalFormatted` steps
 
 
 ## Imputing missing values
+This data set came with some missing values for steps, bellow I've calculated how many rows have missing values on this data set:
+```{r}
+sapply(activityDf, function(x) sum(is.na(x)))
+```
+
+To fill in those missing values, I chose the general mean of that 5 minute interval.
+```{r}
+#colClasses <- sapply(activityDf, class)
+#colNames <- colnames(activityDf)
+#activityDfNaAvg <- data.frame() #read.table(text = "", colClasses = colClasses, col.names = colNames) 
+#TODO debug this
+ f <- function(x) {
+   if(is.na(x["steps"])) {
+     x["steps"] <- avgStepsPerInterval[names(avgStepsPerInterval) == x["interval"]]
+   } 
+   return(x)
+ #avgStepsPerInterval[names(avgStepsPerInterval) == x["interval"]]   
+ #x[1]
+ #activityDf[is.na(activityDf$steps), ]   
+ }
+activityDfNaAvg <- apply(activityDf[1:15,], 1, f)
 
 
-
+```
 ## Are there differences in activity patterns between weekdays and weekends?
