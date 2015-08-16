@@ -1,9 +1,10 @@
-# Reproducible Research: Peer Assessment 1
-
-## Non standard R libs used
-For the plots, I've used ggplot2 lib install.packages("ggplot2")
-require(ggplot2)
-TODO put this in code with control of is installed
+---
+title: 'Reproducible Research: Peer Assessment 1'
+output:
+  html_document:
+    keep_md: yes
+  pdf_document: default
+---
 
 
 ## Loading and preprocessing the data
@@ -62,12 +63,14 @@ I've calculated the sum of steps per day ignoring the days that have NA values, 
 ```r
 stepsPerDay <- tapply(activityDfNoNa$steps, activityDfNoNa$date, FUN = sum)
 stepsPerDay <- stepsPerDay[!is.na(stepsPerDay)]
-stepsPerDayMean <- format(round(mean(stepsPerDay), 2), nsmall = 2)
-stepsPerDayMedian <- format(round(median(stepsPerDay), 2), nsmall = 2)
+stepsPerDayMeanRaw <- mean(stepsPerDay)
+stepsPerDayMean <- format(round(stepsPerDayMeanRaw, 2), nsmall = 2)
+stepsPerDayMedianRaw <- median(stepsPerDay)
+stepsPerDayMedian <- format(round(stepsPerDayMedianRaw, 2), nsmall = 2)
 hist(stepsPerDay, ylab = "Sum of steps", xlab = "Days")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
 
 
 The mean of steps per day here is 10766.19 and the median is 10765.00
@@ -81,7 +84,7 @@ avgStepsPerInterval <- tapply(activityDfNoNa$steps, activityDfNoNa$interval, FUN
 plot(y=avgStepsPerInterval, x= rownames(avgStepsPerInterval),type = "l", ylab = "Average Steps per Interval", xlab="5 min interval")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
 
 I've calculated the interval with the highest average of steps as well:
 
@@ -105,5 +108,58 @@ sapply(activityDf, function(x) sum(is.na(x)))
 ##     2304        0        0
 ```
 
+To fill in those missing values, I chose the general mean of that 5 minute interval.
+
+```r
+activityDfNaAvg <- data.frame()
+for (index in 1:nrow(activityDf))  { 
+  row <- activityDf[index,]
+  if(is.na(row["steps"])) {
+    row["steps"] <- avgStepsPerInterval[as.integer(names(avgStepsPerInterval)) == as.integer(row["interval"])]
+  }
+  activityDfNaAvg <- rbind(activityDfNaAvg, row)
+}
+```
+With those missing values replaced, to compare with the one with NAs removed, I've calculated the mean and the median of total number of steps per day.  
+I ploted an histogram as well:
+
+```r
+stepsPerDayNaAvg <- tapply(activityDfNaAvg$steps, activityDfNaAvg$date, FUN = sum)
+stepsPerDayNaAvgMeanRaw <- mean(stepsPerDayNaAvg)
+stepsPerDayMeanDiff <- stepsPerDayMeanRaw - stepsPerDayNaAvgMeanRaw
+stepsPerDayNaAvgMedianRaw <- median(stepsPerDayNaAvg)
+stepsPerDayMedianDiff <- stepsPerDayMedianRaw - stepsPerDayNaAvgMedianRaw
+hist(stepsPerDayNaAvg, ylab = "Sum of steps", xlab = "Days")
+```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png) 
+The histogram do not seems to differ from the later histogram with the missing data ommited.  
+About the difference in mean and the median, mean of NA removed - NA replaced is 0 and median  of NA removed - NA replaced is -1.1886792
+
+
+
 
 ## Are there differences in activity patterns between weekdays and weekends?
+I've created a factor variable in the dataset to separate weekdays from weekends in the Na processd data frame.
+
+```r
+weekend <- c("Saturday", "Sunday")
+activityDfNaAvg$weekdays <- as.factor(
+                              ifelse(weekdays(as.Date(activityDfNaAvg$date)) %in% weekend, "weekend", "weekday")
+                            )
+```
+I made a panel plot to compare weekdays with weekends
+
+```r
+activityDfWeek <- activityDfNaAvg[activityDfNaAvg$weekdays == "weekday" ,]
+activityDfWeekend <- activityDfNaAvg[activityDfNaAvg$weekdays == "weekend" ,]
+
+avgStepsWeek <- tapply(activityDfWeek$steps, activityDfWeek$interval, FUN = mean)
+avgStepsWeekend <- tapply(activityDfWeekend$steps, activityDfWeekend$interval, FUN = mean)
+layout(matrix(1:2, ncol = 1))
+plot(y=avgStepsWeek, x= rownames(avgStepsWeek),type = "l", ylab = "Average Steps per Interval", xlab="5 min interval", main = "Weekdays")
+
+plot(y=avgStepsWeekend, x= rownames(avgStepsWeekend),type = "l", ylab = "Average Steps per Interval", xlab="5 min interval", main = "Weekends")
+```
+
+![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png) 
